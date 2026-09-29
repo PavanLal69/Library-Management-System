@@ -1,0 +1,3 @@
+Digital catalogs tell you a book exists. They never tell you which shelf it is sitting on.
+Introducing LMS: a 7-tier spatial inventory engine with Code128 physical accession verification and ACID reservation holds.
+Find any volume down to the exact rack and shelf in seconds.

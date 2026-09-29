@@ -1,36 +1,88 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Metropolitan Library Management System (LMS)
+### 2026 Enterprise Full-Stack University & Public Library Platform
 
-## Getting Started
+A production-grade, secure, multi-tier Library Management System built with **Next.js 16 (App Router)**, **TypeScript**, **Tailwind CSS**, **Drizzle ORM**, and **PostgreSQL**. Designed with strict transaction boundaries, granular role-based access control (RBAC), multi-level physical shelf tracking, waitlist queue machines, automated overdue fine calculation, and polymorphic payment processing.
 
-First, run the development server:
+---
+
+## ⚡ Quick Start
+
+### 1. Requirements
+- Node.js v20+ or v24+
+- npm v10+
+
+### 2. Zero-Config Run (Instant Local Development)
+The project comes pre-configured with a dual-mode database engine. If no external `DATABASE_URL` is configured, it automatically initializes and runs on embedded persistent PostgreSQL (PGLite) in `.data/lms-db`:
 
 ```bash
+# 1. Install dependencies (if not already installed)
+npm install
+
+# 2. Seed database with 100+ books, 200+ copies, 30+ authors, and demo users
+npm run seed
+
+# 3. Run development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Visit [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🔑 Pre-Seeded Demo Credentials
 
-## Learn More
+The seed script initializes three accounts for testing the distinct portals and role boundaries:
 
-To learn more about Next.js, take a look at the following resources:
+| Role | Email | Password | Primary Portal |
+| :--- | :--- | :--- | :--- |
+| **Super Admin** | `admin@example.com` | `Password123!` | `/admin` |
+| **Librarian** | `librarian@example.com` | `Password123!` | `/librarian` |
+| **Student Member** | `member@example.com` | `Password123!` | `/member` |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+*Note: The `/login` page includes **1-Click Quick Demo Sign-in buttons** to switch personas instantly during testing.*
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## 🧪 Automated Testing
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Execute the complete 10-step transactional lifecycle test suite:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run test
+```
+
+This verifies:
+1. Member enrollment & card generation
+2. Session authentication & token security
+3. Catalog search & fuzzy matching
+4. Physical shelf location resolution
+5. Waitlist queue positioning
+6. ACID transactional checkout
+7. Overdue calculation and fine assessment
+8. Barcode return reconciliation & queue promotion
+9. Server-side payment settlement
+10. Immutable append-only audit stream verification
+
+---
+
+## 🚀 Key Modules & Architecture
+
+- **Role-Based Access Control (RBAC)**: 5 roles (`SUPER_ADMIN`, `LIBRARIAN`, `ASSISTANT_LIBRARIAN`, `STAFF`, `MEMBER`) enforced server-side via granular permission codes (`BOOK_CREATE`, `BORROW_RETURN`, `FINE_WAIVE`, etc.).
+- **Physical Item Tracking**: Clear separation between `Book` (bibliographic metadata) and `BookCopy` (physical items with Barcode, QR Code, accession number, condition, and shelf location).
+- **Physical Shelving Hierarchy**: `Library → Building → Floor → Section → Room → Rack → Shelf`.
+- **Circulation Machine**: Atomic transactions for book issue, returns, and renewals preventing race conditions.
+- **Waitlist FIFO Queue**: Automated queue progression when books are returned, holding reservations for a configurable pickup window (e.g., 48 hours).
+- **Payment Abstraction**: Polymorphic `PaymentProvider` interface supporting Stripe, Razorpay, and a zero-dependency Developer Sandbox provider.
+- **Real-Time Barcode & QR Generation**: Generates standard Code128 barcodes and verified QR code tags for every physical volume.
+- **Analytics & Observability**: Interactive Recharts visualizations, structured logging, health checks (`/api/health`), and append-only audit tracking.
+
+---
+
+## 📚 Technical Documentation Sitemap
+
+- [ARCHITECTURE.md](file:///./ARCHITECTURE.md) - System architecture, request flow, and state machines.
+- [DATABASE.md](file:///./DATABASE.md) - Relational schema, tables, foreign keys, and indexes.
+- [API.md](file:///./API.md) - Complete REST API specification with response payloads.
+- [SECURITY.md](file:///./SECURITY.md) - Authentication, cookie security, authorization, and rate limiting.
+- [DEPLOYMENT.md](file:///./DEPLOYMENT.md) - Docker, Vercel, PostgreSQL, and Redis production deployment guide.
+- [CONTRIBUTING.md](file:///./CONTRIBUTING.md) - Development workflow and engineering standards.

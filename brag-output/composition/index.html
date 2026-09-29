@@ -1,0 +1,1098 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>Metropolitan Library Management System</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      *, *::before, *::after {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html, body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #faf8f5;
+        font-family: Montserrat, sans-serif;
+        color: #1c1917;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #faf8f5;
+      }
+
+      /* Subtle parchment texture & ambient vignette */
+      .parchment-bg {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+          radial-gradient(ellipse at 50% 20%, rgba(217, 119, 6, 0.04) 0%, transparent 60%),
+          radial-gradient(ellipse at 80% 80%, rgba(22, 101, 52, 0.03) 0%, transparent 50%),
+          linear-gradient(180deg, #faf8f5 0%, #f4efe6 100%);
+      }
+      .grid-lines {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background-size: 80px 80px;
+        background-image:
+          linear-gradient(to right, rgba(28, 25, 23, 0.02) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(28, 25, 23, 0.02) 1px, transparent 1px);
+      }
+
+      /* Typography Helpers */
+      .font-serif {
+        font-family: "EB Garamond", Garamond, Georgia, serif;
+      }
+      .font-mono {
+        font-family: "JetBrains Mono", monospace;
+      }
+
+      /* Scene Container default styles */
+      .scene {
+        position: absolute;
+        inset: 0;
+        width: 1920px;
+        height: 1080px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 80px;
+      }
+
+      /* Pill / Badges */
+      .badge-academic {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 24px;
+        border-radius: 9999px;
+        background: #ffffff;
+        border: 1px solid #e7e5e4;
+        font-size: 16px;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #78716c;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+      }
+      .badge-academic .star {
+        color: #92400e;
+        font-size: 18px;
+      }
+
+      /* Scene 1: Search */
+      .search-box {
+        width: 960px;
+        height: 84px;
+        background: #ffffff;
+        border: 2px solid #e7e5e4;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        padding: 0 28px;
+        gap: 20px;
+        box-shadow: 0 20px 45px -10px rgba(28, 25, 23, 0.08);
+      }
+      .search-query-container {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        font-size: 28px;
+        font-weight: 500;
+        color: #1c1917;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+      .cursor-blink {
+        display: inline-block;
+        width: 3px;
+        height: 32px;
+        background-color: #d97706;
+        margin-left: 4px;
+        border-radius: 2px;
+      }
+      .search-btn {
+        padding: 14px 28px;
+        background: #92400e;
+        color: #ffffff;
+        font-size: 18px;
+        font-weight: 600;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        letter-spacing: -0.01em;
+      }
+      .pills-group {
+        display: flex;
+        gap: 16px;
+        margin-top: 32px;
+      }
+      .category-pill {
+        padding: 12px 22px;
+        border-radius: 9999px;
+        background: #ffffff;
+        border: 1px solid #e7e5e4;
+        font-size: 17px;
+        font-weight: 500;
+        color: #57534e;
+      }
+
+      /* Scene 2: Book Spotlight Card */
+      .spotlight-card {
+        width: 1240px;
+        background: #ffffff;
+        border: 1px solid #e7e5e4;
+        border-radius: 28px;
+        padding: 44px;
+        display: flex;
+        gap: 44px;
+        box-shadow: 0 25px 60px -15px rgba(28, 25, 23, 0.1);
+        align-items: center;
+      }
+      .book-cover {
+        width: 280px;
+        height: 400px;
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        border-radius: 16px;
+        box-shadow: 0 20px 40px rgba(15, 23, 42, 0.25);
+        padding: 32px 24px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        color: #f8fafc;
+        position: relative;
+        overflow: hidden;
+      }
+      .book-cover::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 14px;
+        background: linear-gradient(90deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.02) 100%);
+      }
+      .book-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .badge-shelf-ready {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 18px;
+        border-radius: 9999px;
+        background: #dcfce7;
+        color: #166534;
+        font-size: 16px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        width: fit-content;
+      }
+      .badge-shelf-ready .pulse-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #15803d;
+      }
+      .spotlight-actions {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-top: 12px;
+      }
+      .btn-locator {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        padding: 18px 36px;
+        background: #1c1917;
+        color: #ffffff;
+        border-radius: 16px;
+        font-size: 20px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        box-shadow: 0 8px 24px rgba(28, 25, 23, 0.15);
+      }
+
+      /* Simulated Cursor */
+      #simulated-cursor {
+        position: absolute;
+        width: 32px;
+        height: 32px;
+        pointer-events: none;
+        z-index: 1000;
+      }
+
+      /* Scene 3: Shelf Locator */
+      .shelf-layout {
+        width: 1320px;
+        display: flex;
+        flex-direction: column;
+        gap: 36px;
+      }
+      .hierarchy-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 24px;
+      }
+      .hierarchy-card {
+        background: #ffffff;
+        border: 1.5px solid #e7e5e4;
+        border-radius: 20px;
+        padding: 28px 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+      }
+      .step-tag {
+        font-size: 14px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #92400e;
+      }
+      .step-value {
+        font-size: 24px;
+        font-weight: 700;
+        color: #1c1917;
+        letter-spacing: -0.02em;
+      }
+      .step-detail {
+        font-size: 16px;
+        color: #78716c;
+      }
+      .bottom-shelf-deck {
+        display: flex;
+        gap: 24px;
+        align-items: stretch;
+      }
+      .barcode-card {
+        flex: 1.2;
+        background: #ffffff;
+        border: 1.5px solid #e7e5e4;
+        border-radius: 20px;
+        padding: 28px 36px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: relative;
+        overflow: hidden;
+      }
+      .barcode-laser { left: 0;
+
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: #ef4444;
+        box-shadow: 0 0 12px 2px #ef4444;
+        pointer-events: none;
+      }
+      .reserve-action-card {
+        flex: 0.8;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .btn-reserve {
+        width: 100%;
+        height: 100%;
+        min-height: 96px;
+        border-radius: 20px;
+        background: #15803d;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        box-shadow: 0 16px 36px rgba(21, 128, 61, 0.25);
+      }
+
+      /* Scene 4: Punchline & Outro */
+      .outro-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 40px;
+        max-width: 1400px;
+      }
+      .punchline-text {
+        font-size: 72px;
+        font-weight: 600;
+        line-height: 1.15;
+        letter-spacing: -0.03em;
+        color: #1c1917;
+      }
+      .brand-crest {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+      }
+      .brand-title {
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: #78716c;
+      }
+      .tech-stack-row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .tech-badge {
+        padding: 8px 20px;
+        background: #ffffff;
+        border: 1px solid #e7e5e4;
+        border-radius: 9999px;
+        font-size: 16px;
+        font-weight: 600;
+        color: #44403c;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="20"
+      data-width="1920"
+      data-height="1080"
+    >
+      <!-- Background elements -->
+      <div class="parchment-bg"></div>
+      <div class="grid-lines"></div>
+
+      <!-- ========================================== -->
+      <!-- AUDIO TRACKS                               -->
+      <!-- ========================================== -->
+      <!-- Track 10: Background Music Bed -->
+      <audio
+        id="audio-music-bed"
+        src="assets/music/happy-beats-business-moves-vol-12-by-ende-dot-app.mp3"
+        data-start="0"
+        data-duration="20"
+        data-track-index="10"
+        data-volume="0.30"
+        data-automation='{"version":1,"lanes":[{"target":"volume","points":[{"t":0,"v":0.25},{"t":1.0,"v":0.32},{"t":18.0,"v":0.32},{"t":20.0,"v":0}]}]}'
+      ></audio>
+
+      <!-- Track 11: SFX Keypress 1 -->
+      <audio
+        id="sfx-key-1"
+        src="assets/sfx/keyboard/keypress-001.wav"
+        data-start="1.1"
+        data-duration="0.4"
+        data-track-index="11"
+        data-volume="0.75"
+      ></audio>
+
+      <!-- Track 12: SFX Keypress 2 -->
+      <audio
+        id="sfx-key-2"
+        src="assets/sfx/keyboard/keypress-003.wav"
+        data-start="1.5"
+        data-duration="0.4"
+        data-track-index="12"
+        data-volume="0.75"
+      ></audio>
+
+      <!-- Track 13: SFX Keypress 3 -->
+      <audio
+        id="sfx-key-3"
+        src="assets/sfx/keyboard/keypress-007.wav"
+        data-start="1.9"
+        data-duration="0.4"
+        data-track-index="13"
+        data-volume="0.75"
+      ></audio>
+
+      <!-- Track 14: SFX Book Drop / Card Entry -->
+      <audio
+        id="sfx-card-drop"
+        src="assets/sfx/interface/drop_001.ogg"
+        data-start="3.6"
+        data-duration="0.6"
+        data-track-index="14"
+        data-volume="0.80"
+      ></audio>
+
+      <!-- Track 15: SFX Pill Badge Pop -->
+      <audio
+        id="sfx-badge-pop"
+        src="assets/sfx/interface/select_008.ogg"
+        data-start="4.91"
+        data-duration="0.5"
+        data-track-index="15"
+        data-volume="0.85"
+      ></audio>
+
+      <!-- Track 16: SFX Cursor Button Click -->
+      <audio
+        id="sfx-btn-click"
+        src="assets/sfx/interface/click_001.ogg"
+        data-start="7.09"
+        data-duration="0.4"
+        data-track-index="16"
+        data-volume="0.90"
+      ></audio>
+
+      <!-- Track 17: SFX Hierarchy Step 1 -->
+      <audio
+        id="sfx-step-1"
+        src="assets/sfx/interface/click_001.ogg"
+        data-start="8.74"
+        data-duration="0.4"
+        data-track-index="17"
+        data-volume="0.70"
+      ></audio>
+
+      <!-- Track 18: SFX Hierarchy Step 2 -->
+      <audio
+        id="sfx-step-2"
+        src="assets/sfx/interface/select_008.ogg"
+        data-start="9.83"
+        data-duration="0.4"
+        data-track-index="18"
+        data-volume="0.70"
+      ></audio>
+
+      <!-- Track 19: SFX Hierarchy Step 3 -->
+      <audio
+        id="sfx-step-3"
+        src="assets/sfx/interface/drop_001.ogg"
+        data-start="10.93"
+        data-duration="0.5"
+        data-track-index="19"
+        data-volume="0.75"
+      ></audio>
+
+      <!-- Track 20: SFX Reservation Click -->
+      <audio
+        id="sfx-reserve-click"
+        src="assets/sfx/interface/click_001.ogg"
+        data-start="13.11"
+        data-duration="0.4"
+        data-track-index="20"
+        data-volume="0.95"
+      ></audio>
+
+      <!-- Track 21: SFX Success Bell Chime -->
+      <audio
+        id="sfx-success-chime"
+        src="assets/sfx/impact/impactBell_heavy_000.ogg"
+        data-start="13.15"
+        data-duration="1.8"
+        data-track-index="21"
+        data-volume="0.85"
+      ></audio>
+
+      <!-- Track 22: SFX Outro Accent -->
+      <audio
+        id="sfx-outro-accent"
+        src="assets/sfx/interface/select_008.ogg"
+        data-start="17.47"
+        data-duration="0.6"
+        data-track-index="22"
+        data-volume="0.80"
+      ></audio>
+
+      <!-- ========================================== -->
+      <!-- SCENE 1: THE ACADEMIC HOOK (0.0s – 3.5s)  -->
+      <!-- ========================================== -->
+      <div
+        id="scene1"
+        class="clip scene"
+        data-start="0"
+        data-duration="3.5"
+        data-track-index="1"
+      >
+        <div id="scene1-inner" style="display: flex; flex-direction: column; align-items: center; gap: 32px;">
+          <!-- Institution Crest / Badge -->
+          <div id="scene1-badge" class="badge-academic font-mono">
+            <span class="star">✦</span>
+            <span>University Library &amp; Archives</span>
+            <span style="opacity: 0.4;">•</span>
+            <span>Est. 1894</span>
+          </div>
+
+          <!-- Stately Serif Question Headline -->
+          <h1 id="scene1-title" class="font-serif" style="font-size: 76px; font-weight: 500; text-align: center; line-height: 1.1; letter-spacing: -0.02em;">
+            What would you like to
+            <span style="font-style: italic; color: #92400e; text-decoration: underline; text-decoration-color: rgba(217, 119, 6, 0.3); text-underline-offset: 10px;">read today?</span>
+          </h1>
+
+          <!-- Catalog Search Input -->
+          <div id="scene1-search" class="search-box">
+            <!-- Search Icon SVG -->
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#78716c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <div class="search-query-container">
+              <span id="scene1-query-text"></span>
+              <span id="scene1-cursor" class="cursor-blink"></span>
+            </div>
+            <div class="search-btn font-serif">
+              <span>Catalog Search</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Popular Filter Pills -->
+          <div id="scene1-pills" class="pills-group">
+            <div class="category-pill">Distributed Systems</div>
+            <div class="category-pill">Computer Architecture</div>
+            <div class="category-pill">Database Internals</div>
+            <div class="category-pill">Algorithms</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- SCENE 2: CURATED VOLUME SPOTLIGHT (3.5s – 8.5s) -->
+      <!-- ========================================== -->
+      <div
+        id="scene2"
+        class="clip scene"
+        data-start="3.5"
+        data-duration="5.0"
+        data-track-index="2"
+      >
+        <div id="scene2-inner" style="display: flex; flex-direction: column; align-items: center; gap: 24px;">
+          <!-- Section Tag -->
+          <div id="scene2-kicker" class="font-mono" style="font-size: 15px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: #92400e;">
+            Catalog Volume Spotlight • Seminal CS Treatise
+          </div>
+
+          <!-- Spotlight Card -->
+          <div id="scene2-card" class="spotlight-card">
+            <!-- Book Cover Component -->
+            <div id="scene2-cover" class="book-cover" data-layout-allow-overflow>
+              <div>
+                <div class="font-mono" style="font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: #cbd5e1;">
+                  Academic Edition
+                </div>
+                <div class="font-serif" style="font-size: 26px; font-weight: 700; line-height: 1.2; margin-top: 14px; color: #f8fafc;">
+                  Designing Data-Intensive Applications
+                </div>
+              </div>
+
+              <!-- Stylized wild boar / data animal artwork SVG -->
+              <div style="align-self: center; margin: 16px 0; opacity: 0.85;" data-layout-allow-overflow>
+                <svg width="180" height="130" viewBox="0 0 100 70" fill="none" stroke="#e2e8f0" stroke-width="1.5">
+                  <path d="M15 45 C25 25, 45 20, 65 30 C80 38, 90 35, 95 42 C85 52, 70 50, 55 52 C35 55, 20 52, 15 45 Z" />
+                  <path d="M65 30 C70 20, 85 22, 90 28" />
+                  <circle cx="82" cy="32" r="2" fill="#e2e8f0" />
+                  <path d="M30 52 L28 65 M40 52 L39 65 M65 52 L67 65 M78 50 L81 65" stroke-linecap="round" stroke-width="2" />
+                  <path d="M22 36 Q35 28 50 36 T80 36" stroke-dasharray="2 3" opacity="0.6" />
+                </svg>
+              </div>
+
+              <div>
+                <div class="font-serif" style="font-size: 16px; color: #cbd5e1;">Martin Kleppmann</div>
+                <div class="font-mono" style="font-size: 11px; color: #64748b; margin-top: 4px;">ISBN 978-1-449-37332-0</div>
+              </div>
+            </div>
+
+            <!-- Book Meta & Availability -->
+            <div class="book-info">
+              <!-- Shelf Ready Badge -->
+              <div id="scene2-badge" class="badge-shelf-ready">
+                <span class="pulse-dot"></span>
+                <span>3 Copies Available on Physical Shelf</span>
+              </div>
+
+              <div>
+                <h2 class="font-serif" style="font-size: 42px; font-weight: 700; line-height: 1.15; color: #1c1917;">
+                  Designing Data-Intensive Applications
+                </h2>
+                <div style="font-size: 22px; color: #78716c; margin-top: 8px;">
+                  The Big Ideas Behind Reliable, Scalable, and Maintainable Systems
+                </div>
+              </div>
+
+              <!-- Rating & Metadata Row -->
+              <div style="display: flex; align-items: center; gap: 24px; padding: 16px 0; border-top: 1px solid #f4efe6; border-bottom: 1px solid #f4efe6;">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <span style="color: #92400e; font-size: 22px;">★★★★★</span>
+                  <span style="font-weight: 700; font-size: 19px; margin-left: 4px;">4.9</span>
+                  <span style="color: #78716c; font-size: 16px;">(24 academic reviews)</span>
+                </div>
+                <div style="color: #e7e5e4;">|</div>
+                <div class="font-mono" style="font-size: 16px; color: #57534e;">
+                  Call No: <strong>QA76.9.D3 K54</strong>
+                </div>
+              </div>
+
+              <!-- Actions & Trigger Button -->
+              <div class="spotlight-actions">
+                <div id="scene2-cta" class="btn-locator">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                  </svg>
+                  <span>Open Physical Shelf Locator</span>
+                </div>
+                <div class="font-mono" style="font-size: 16px; color: #78716c;">
+                  Instant 1-Click Hold Available
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Simulated Cursor that homes in and clicks locator button -->
+        <div id="simulated-cursor">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="#1c1917" stroke="#ffffff" stroke-width="1.5">
+            <path d="M3 3l7 18 3-7 7-3L3 3z"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- SCENE 3: PHYSICAL SHELF TRACKING (8.5s – 16.0s) -->
+      <!-- ========================================== -->
+      <div
+        id="scene3"
+        class="clip scene"
+        data-start="8.5"
+        data-duration="7.5"
+        data-track-index="3"
+      >
+        <div id="scene3-inner" class="shelf-layout">
+          <!-- Stately Header -->
+          <div id="scene3-header" style="display: flex; justify-content: space-between; align-items: flex-end;">
+            <div>
+              <div class="font-mono" style="font-size: 14px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #92400e; margin-bottom: 8px;">
+                7-Tier Campus Spatial Locator
+              </div>
+              <h2 class="font-serif" style="font-size: 46px; font-weight: 700; letter-spacing: -0.02em; color: #1c1917;">
+                Physical Copies &amp; Campus Shelf Tracking
+              </h2>
+            </div>
+            <div class="badge-academic font-mono" style="border-color: #dcfce7; background: #f0fdf4; color: #166534;">
+              <span>Real-Time Hardware Tracking</span>
+            </div>
+          </div>
+
+          <!-- 4-Step Spatial Hierarchy Cards -->
+          <div class="hierarchy-grid">
+            <!-- Step 1: Building -->
+            <div id="shelf-step-1" class="hierarchy-card">
+              <span class="step-tag font-mono">Tier 1 • Building</span>
+              <div class="step-value">Main Library</div>
+              <div class="step-detail">North Research Quad</div>
+            </div>
+
+            <!-- Step 2: Floor -->
+            <div id="shelf-step-2" class="hierarchy-card">
+              <span class="step-tag font-mono">Tier 2 • Floor</span>
+              <div class="step-value">Level 2 — Stacks</div>
+              <div class="step-detail">Science &amp; Engineering</div>
+            </div>
+
+            <!-- Step 3: Section -->
+            <div id="shelf-step-3" class="hierarchy-card">
+              <span class="step-tag font-mono">Tier 3 • Section</span>
+              <div class="step-value">Section CS-04</div>
+              <div class="step-detail">Distributed Systems</div>
+            </div>
+
+            <!-- Step 4: Rack & Shelf -->
+            <div id="shelf-step-4" class="hierarchy-card" style="border-color: #d97706; background: #fffbeb;">
+              <span class="step-tag font-mono" style="color: #92400e;">Tier 4 • Physical Shelf</span>
+              <div class="step-value" style="color: #92400e;">Rack 04 • Shelf B</div>
+              <div class="step-detail font-mono" style="color: #92400e; font-weight: 600;">Position #14 (Eye Level)</div>
+            </div>
+          </div>
+
+          <!-- Bottom Deck: Barcode Accession Tag + 1-Click Reservation Confirmation -->
+          <div class="bottom-shelf-deck">
+            <!-- Barcode Accession Card -->
+            <div id="scene3-barcode-box" class="barcode-card">
+              <div>
+                <div class="font-mono" style="font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #78716c;">
+                  Physical Accession Barcode (Code128)
+                </div>
+                <div class="font-mono" style="font-size: 32px; font-weight: 800; letter-spacing: 0.08em; color: #1c1917; margin-top: 6px;">
+                  LMS-COPY-8841-B
+                </div>
+                <div style="font-size: 15px; color: #78716c; margin-top: 4px;">
+                  Verified physical RFID tag attached • Ready for student accession
+                </div>
+              </div>
+
+              <!-- Barcode SVG graphic -->
+              <div style="position: relative; width: 260px; height: 72px;">
+                <svg width="260" height="72" viewBox="0 0 260 72" fill="#1c1917">
+                  <!-- Barcode vertical stripes -->
+                  <rect x="0" y="0" width="4" height="72" />
+                  <rect x="8" y="0" width="2" height="72" />
+                  <rect x="14" y="0" width="6" height="72" />
+                  <rect x="24" y="0" width="3" height="72" />
+                  <rect x="32" y="0" width="5" height="72" />
+                  <rect x="42" y="0" width="2" height="72" />
+                  <rect x="48" y="0" width="8" height="72" />
+                  <rect x="62" y="0" width="3" height="72" />
+                  <rect x="70" y="0" width="6" height="72" />
+                  <rect x="80" y="0" width="4" height="72" />
+                  <rect x="90" y="0" width="2" height="72" />
+                  <rect x="96" y="0" width="7" height="72" />
+                  <rect x="108" y="0" width="4" height="72" />
+                  <rect x="116" y="0" width="6" height="72" />
+                  <rect x="126" y="0" width="2" height="72" />
+                  <rect x="132" y="0" width="8" height="72" />
+                  <rect x="144" y="0" width="4" height="72" />
+                  <rect x="154" y="0" width="3" height="72" />
+                  <rect x="162" y="0" width="6" height="72" />
+                  <rect x="172" y="0" width="4" height="72" />
+                  <rect x="180" y="0" width="7" height="72" />
+                  <rect x="192" y="0" width="2" height="72" />
+                  <rect x="200" y="0" width="5" height="72" />
+                  <rect x="210" y="0" width="8" height="72" />
+                  <rect x="224" y="0" width="3" height="72" />
+                  <rect x="232" y="0" width="6" height="72" />
+                  <rect x="244" y="0" width="4" height="72" />
+                  <rect x="254" y="0" width="6" height="72" />
+                </svg>
+                <div id="scene3-laser" class="barcode-laser"></div>
+              </div>
+            </div>
+
+            <!-- 1-Click Reservation Button & Success State -->
+            <div class="reserve-action-card">
+              <div id="scene3-reserve-btn" class="btn-reserve font-serif">
+                <svg id="reserve-icon-cart" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                  <line x1="3" y1="6" x2="21" y2="6"></line>
+                  <path d="M16 10a4 4 0 0 1-8 0"></path>
+                </svg>
+                <svg id="reserve-icon-check" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span id="reserve-btn-text">Reserve Copy for Pickup</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- SCENE 4: PUNCHLINE & OUTRO (16.0s – 20.0s) -->
+      <!-- ========================================== -->
+      <div
+        id="scene4"
+        class="clip scene"
+        data-start="16.0"
+        data-duration="4.0"
+        data-track-index="4"
+      >
+        <div id="scene4-inner" class="outro-container">
+          <!-- Institutional Seal Mark -->
+          <div id="scene4-seal" style="width: 84px; height: 84px; border-radius: 50%; background: #ffffff; border: 2px solid #d97706; display: flex; align-items: center; justify-content: center; box-shadow: 0 12px 30px rgba(217, 119, 6, 0.15);">
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+              <line x1="12" y1="6" x2="16" y2="6"></line>
+              <line x1="12" y1="10" x2="16" y2="10"></line>
+            </svg>
+          </div>
+
+          <!-- Stately Definitive Punchline -->
+          <h1 id="scene4-punchline" class="font-serif punchline-text">
+            “From distributed consensus<br />to the exact physical shelf.”
+          </h1>
+
+          <!-- Brand Crest & Architecture Hallmarks -->
+          <div id="scene4-brand" class="brand-crest">
+            <div class="brand-title font-mono">
+              Metropolitan Library Management System
+            </div>
+
+            <div class="tech-stack-row font-mono">
+              <div class="tech-badge">Next.js 16</div>
+              <div class="tech-badge">Drizzle ORM</div>
+              <div class="tech-badge">PostgreSQL</div>
+              <div class="tech-badge" style="border-color: #dcfce7; background: #f0fdf4; color: #166534;">ACID Transactions</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- GSAP DETERMINISTIC ANIMATION TIMELINE     -->
+    <!-- ========================================== -->
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // ----------------------------------------------------
+      // SCENE 1 TIMELINE (0.0s – 3.5s)
+      // ----------------------------------------------------
+      // Initial state of Scene 1 items
+      tl.fromTo(
+        "#scene1-badge",
+        { opacity: 0, y: -20 },
+        { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" },
+        0.1
+      );
+      tl.fromTo(
+        "#scene1-title",
+        { opacity: 0, y: 30 },
+        { opacity: 1, y: 0, duration: 0.7, ease: "power2.out" },
+        0.3
+      );
+      tl.fromTo(
+        "#scene1-search",
+        { opacity: 0, y: 24, scale: 0.95 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: "back.out(1.4)" },
+        0.6
+      );
+      tl.fromTo(
+        ".category-pill",
+        { opacity: 0, y: 14 },
+        { opacity: 1, y: 0, duration: 0.4, stagger: 0.08, ease: "power2.out" },
+        0.8
+      );
+
+      // Typing animation for query: "Designing Data-Intensive Applications"
+      const fullQuery = "Designing Data-Intensive Applications";
+      const textEl = document.getElementById("scene1-query-text");
+      const queryDriver = { len: 0 };
+      tl.to(
+        queryDriver,
+        {
+          len: fullQuery.length,
+          duration: 1.4,
+          ease: "none",
+          onUpdate: () => {
+            textEl.textContent = fullQuery.substring(0, Math.floor(queryDriver.len));
+          }
+        },
+        1.1
+      );
+
+      // Cursor blink (deterministic sine square wave)
+      const cursorEl = document.getElementById("scene1-cursor");
+      const blinkDriver = { cycle: 0 };
+      tl.to(
+        blinkDriver,
+        {
+          cycle: Math.PI * 14,
+          duration: 3.5,
+          ease: "none",
+          onUpdate: () => {
+            cursorEl.style.opacity = Math.sin(blinkDriver.cycle) > 0 ? "1" : "0";
+          }
+        },
+        0
+      );
+
+      // Scene 1 Exit transition: subtle scale & fade
+      tl.to(
+        "#scene1-inner",
+        { opacity: 0, y: -30, duration: 0.35, ease: "power2.in" },
+        3.15
+      );
+
+      // ----------------------------------------------------
+      // SCENE 2 TIMELINE (3.5s – 8.5s)
+      // ----------------------------------------------------
+      tl.fromTo(
+        "#scene2-kicker",
+        { opacity: 0, y: -16 },
+        { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" },
+        3.55
+      );
+      tl.fromTo(
+        "#scene2-card",
+        { opacity: 0, y: 40, scale: 0.94 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.7, ease: "back.out(1.2)" },
+        3.6
+      );
+      tl.fromTo(
+        "#scene2-badge",
+        { opacity: 0, scale: 0.8 },
+        { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.7)" },
+        4.91
+      );
+
+      // Simulated Cursor Movement: sweeps in from bottom-right to the locator button
+      tl.fromTo(
+        "#simulated-cursor",
+        { opacity: 0, x: 1400, y: 900 },
+        { opacity: 1, x: 1060, y: 685, duration: 1.2, ease: "power2.out" },
+        5.8
+      );
+      // Cursor click press animation
+      tl.to(
+        "#simulated-cursor",
+        { scale: 0.82, duration: 0.12, yoyo: true, repeat: 1, ease: "power1.inOut" },
+        7.09
+      );
+      tl.to(
+        "#scene2-cta",
+        { scale: 0.95, duration: 0.12, yoyo: true, repeat: 1, ease: "power1.inOut" },
+        7.09
+      );
+
+      // Scene 2 Exit transition
+      tl.to(
+        "#scene2-inner",
+        { opacity: 0, y: -30, duration: 0.35, ease: "power2.in" },
+        8.15
+      );
+
+      // ----------------------------------------------------
+      // SCENE 3 TIMELINE (8.5s – 16.0s)
+      // ----------------------------------------------------
+      tl.fromTo(
+        "#scene3-header",
+        { opacity: 0, y: -20 },
+        { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" },
+        8.55
+      );
+
+      // Cascade of the 4 spatial hierarchy cards
+      tl.fromTo(
+        "#shelf-step-1",
+        { opacity: 0, y: 30, scale: 0.95 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "back.out(1.2)" },
+        8.74
+      );
+      tl.fromTo(
+        "#shelf-step-2",
+        { opacity: 0, y: 30, scale: 0.95 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "back.out(1.2)" },
+        9.83
+      );
+      tl.fromTo(
+        "#shelf-step-3",
+        { opacity: 0, y: 30, scale: 0.95 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "back.out(1.2)" },
+        10.4
+      );
+      tl.fromTo(
+        "#shelf-step-4",
+        { opacity: 0, y: 30, scale: 0.95 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "back.out(1.4)" },
+        10.93
+      );
+
+      // Reveal bottom deck: Barcode card & Reservation button
+      tl.fromTo(
+        "#scene3-barcode-box",
+        { opacity: 0, y: 24 },
+        { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" },
+        11.5
+      );
+      tl.fromTo(
+        "#scene3-reserve-btn",
+        { opacity: 0, y: 24 },
+        { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" },
+        11.7
+      );
+
+      // Red laser scanning across barcode
+      tl.fromTo(
+        "#scene3-laser",
+        { x: 10 },
+        { x: 230, duration: 1.4, ease: "power1.inOut", repeat: 1, yoyo: true },
+        11.8
+      );
+
+      // 1-Click Reservation Click & Success State Transition at 13.11s
+      tl.to(
+        "#scene3-reserve-btn",
+        { scale: 0.94, duration: 0.1, yoyo: true, repeat: 1, ease: "power1.inOut" },
+        13.11
+      );
+      tl.set(
+        "#reserve-icon-cart",
+        { display: "none" },
+        13.15
+      );
+      tl.set(
+        "#reserve-icon-check",
+        { display: "inline-block" },
+        13.15
+      );
+      tl.to(
+        "#scene3-reserve-btn",
+        {
+          backgroundColor: "#166534",
+          boxShadow: "0 0 35px rgba(22, 101, 52, 0.6)",
+          duration: 0.3
+        },
+        13.15
+      );
+
+      const btnTextEl = document.getElementById("reserve-btn-text");
+      tl.call(
+        () => {
+          btnTextEl.textContent = "✓ Reserved — 48h Hold Ready";
+        },
+        null,
+        13.15
+      );
+
+      // Scene 3 Exit transition
+      tl.to(
+        "#scene3-inner",
+        { opacity: 0, y: -30, duration: 0.35, ease: "power2.in" },
+        15.65
+      );
+
+      // ----------------------------------------------------
+      // SCENE 4 TIMELINE (16.0s – 20.0s)
+      // ----------------------------------------------------
+      tl.fromTo(
+        "#scene4-seal",
+        { opacity: 0, scale: 0.6, rotate: -20 },
+        { opacity: 1, scale: 1, rotate: 0, duration: 0.7, ease: "back.out(1.5)" },
+        16.1
+      );
+      tl.fromTo(
+        "#scene4-punchline",
+        { opacity: 0, y: 32 },
+        { opacity: 1, y: 0, duration: 0.8, ease: "power2.out" },
+        16.4
+      );
+      tl.fromTo(
+        "#scene4-brand",
+        { opacity: 0, y: 24 },
+        { opacity: 1, y: 0, duration: 0.7, ease: "power2.out" },
+        17.47
+      );
+
+      // Register timeline for Hyperframes runtime
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>
